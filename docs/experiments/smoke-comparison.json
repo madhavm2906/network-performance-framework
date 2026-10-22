@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "baseline": "/home/madhavm06/projects/network-performance-framework/docs/experiments/tcp-smoke-v1",
+  "candidate": "/home/madhavm06/projects/network-performance-framework/docs/experiments/tcp-candidate-v1",
+  "configuration": {
+    "payload_bytes": 64,
+    "warmup": 10,
+    "iterations": 100,
+    "runs": 3,
+    "timeout_seconds": 30.0
+  },
+  "thresholds": {
+    "relative_percent": 20.0,
+    "absolute_us": 5.0,
+    "rule": "A slowdown must strictly exceed both thresholds."
+  },
+  "metrics": {
+    "median_of_run_medians_us": {
+      "baseline_us": 29.794,
+      "candidate_us": 28.616,
+      "delta_us": -1.1780000000000008,
+      "change_percent": -3.9538162046049568,
+      "regression": false
+    },
+    "median_of_run_p95s_us": {
+      "baseline_us": 40.631,
+      "candidate_us": 38.297,
+      "delta_us": -2.334000000000003,
+      "change_percent": -5.744382368142559,
+      "regression": false
+    }
+  },
+  "independent_runs": {
+    "baseline_medians_us": [
+      29.794,
+      29.0245,
+      35.826499999999996
+    ],
+    "candidate_medians_us": [
+      29.250999999999998,
+      28.616,
+      28.455
+    ],
+    "baseline_p95s_us": [
+      40.631,
+      31.225,
+      99.492
+    ],
+    "candidate_p95s_us": [
+      38.297,
+      57.973,
+      33.899
+    ]
+  },
+  "interpretation": "Threshold check only; this does not establish statistical significance or prove that a code change caused a slowdown. Matching recorded environment fields does not establish identical hardware or machine load."
+}

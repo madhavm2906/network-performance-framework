@@ -1,0 +1,19 @@
+{
+  "git_revision": "b37cf4ca2c506916fe68f56a62b3cbb6a790b769",
+  "working_tree_clean": true,
+  "binary_path": "/home/madhavm06/projects/network-performance-framework/build/release/tcp_roundtrip",
+  "binary_sha256": "bc445e140b8065c62d39ee0f5616e03d3e9e76220f4d6f14a7f8d2a83b81c2df",
+  "platform": "Linux-5.15.167.4-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+  "python_version": "3.12.3",
+  "created_utc": "2026-10-22T04:26:36.343090+00:00",
+  "configuration": {
+    "payload_bytes": 64,
+    "warmup": 10,
+    "iterations": 100,
+    "runs": 3,
+    "timeout_seconds": 30.0
+  },
+  "measurement": "Local TCP request/echo round-trip latency in microseconds.",
+  "percentile_definition": "nearest-rank",
+  "scope": "Two sockets and one echo thread in one process; no CPU pinning."
+}

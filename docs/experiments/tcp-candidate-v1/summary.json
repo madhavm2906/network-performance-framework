@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "benchmark": "tcp_roundtrip",
+  "payload_bytes": 64,
+  "runs": [
+    {
+      "samples": 100,
+      "median_us": 29.250999999999998,
+      "p95_us": 38.297,
+      "min_us": 28.111,
+      "max_us": 100.27,
+      "run": 1
+    },
+    {
+      "samples": 100,
+      "median_us": 28.616,
+      "p95_us": 57.973,
+      "min_us": 27.197,
+      "max_us": 73.577,
+      "run": 2
+    },
+    {
+      "samples": 100,
+      "median_us": 28.455,
+      "p95_us": 33.899,
+      "min_us": 26.02,
+      "max_us": 43.503,
+      "run": 3
+    }
+  ],
+  "median_of_run_medians_us": 28.616
+}
