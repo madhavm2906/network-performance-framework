@@ -1,0 +1,133 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test-and-benchmark:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+
+    env:
+      PYTHONPATH: src
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Install C++ build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y g++ cmake ninja-build
+
+      - name: Run Python unit tests
+        run: python -m unittest discover -s tests -v
+
+      - name: Configure Release benchmark
+        run: >-
+          cmake -S . -B build/release -G Ninja
+          -DCMAKE_BUILD_TYPE=Release
+          -DPython3_EXECUTABLE="$(command -v python)"
+
+      - name: Build benchmark
+        run: cmake --build build/release
+
+      - name: Run C++ integration tests
+        run: ctest --test-dir build/release --output-on-failure
+
+      - name: Record first smoke experiment
+        run: >-
+          python -m netperf.tcp --output results/ci-reference
+          --payload-bytes 64 --warmup 10 --iterations 100
+          --runs 3 --timeout-seconds 30
+
+      - name: Record second smoke experiment
+        run: >-
+          python -m netperf.tcp --output results/ci-candidate
+          --payload-bytes 64 --warmup 10 --iterations 100
+          --runs 3 --timeout-seconds 30
+
+      - name: Compare smoke experiments (informational)
+        shell: bash
+        run: |
+          # Exit 2 is a valid threshold result; exit 1 is an error.
+          set +e
+          python -m netperf.compare \
+            --baseline results/ci-reference \
+            --candidate results/ci-candidate \
+            --relative-threshold-percent 20 \
+            --absolute-threshold-us 5 \
+            > results/ci-comparison.json
+          comparison_exit=$?
+          set -e
+
+          if [ "$comparison_exit" -ne 0 ] && [ "$comparison_exit" -ne 2 ]; then
+            exit "$comparison_exit"
+          fi
+
+          cat results/ci-comparison.json
+
+      - name: Add comparison to run summary
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          report = json.loads(
+              Path("results/ci-comparison.json").read_text()
+          )
+
+          with open(
+              os.environ["GITHUB_STEP_SUMMARY"],
+              "a",
+              encoding="utf-8",
+          ) as stream:
+              stream.write("## TCP smoke comparison\n\n")
+              stream.write(
+                  f"Threshold result: **{report['status']}**\n\n"
+              )
+              stream.write(
+                  "Both experiments use the same build in this job. "
+              )
+              stream.write(
+                  "Timing differences are informational "
+                  "and do not fail CI.\n\n"
+              )
+              stream.write(
+                  "| Metric | Reference (us) | Candidate (us) | Change |\n"
+              )
+              stream.write("|---|---:|---:|---:|\n")
+
+              for name, metric in report["metrics"].items():
+                  stream.write(
+                      f"| {name} | {metric['baseline_us']:.3f} | "
+                      f"{metric['candidate_us']:.3f} | "
+                      f"{metric['change_percent']:+.2f}% |\n"
+                  )
+          PY
+
+      - name: Upload experiment evidence and test diagnostics
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: tcp-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            results/
+            build/release/Testing/Temporary/LastTest.log
+            build/release/CMakeCache.txt
+          if-no-files-found: warn
+          retention-days: 14
